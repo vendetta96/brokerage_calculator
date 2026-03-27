@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brokerage Cost Calculator — Equity Delivery</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg-deep: #0a0e17;
+  --bg-surface: #111827;
+  --bg-card: rgba(17, 24, 39, 0.7);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.12);
+  --text-primary: #f0f4f8;
+  --text-secondary: #8899aa;
+  --text-muted: #556677;
+  --green: #1D9E75;
+  --green-glow: rgba(29, 158, 117, 0.15);
+  --green-soft: #143d30;
+  --amber: #BA7517;
+  --amber-glow: rgba(186, 117, 23, 0.15);
+  --red: #C53030;
+  --red-glow: rgba(197, 48, 48, 0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(29, 158, 117, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -300px;
+  left: -200px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(186, 117, 23, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #8899aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header p {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ─── Controls ─── */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.ctrl-card {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease;
+}
+
+.ctrl-card:hover {
+  border-color: var(--border-active);
+}
+
+.ctrl-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ctrl-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Range slider styling */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 3px solid var(--bg-deep);
+  box-shadow: 0 0 12px rgba(29, 158, 117, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(29, 158, 117, 0.6);
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+/* ─── Savings Banner ─── */
+.save-banner {
+  background: linear-gradient(135deg, var(--green-soft), rgba(29, 158, 117, 0.05));
+  border: 1px solid rgba(29, 158, 117, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 16px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.save-item {
+  text-align: center;
+}
+
+.save-item .sv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--green);
+  display: block;
+}
+
+.save-item .sl {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Broker Cards ─── */
+.broker-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.bcard {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 20px;
+  backdrop-filter: blur(16px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bcard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.4s ease;
+}
+
+.bcard.winner {
+  border-color: rgba(29, 158, 117, 0.3);
+  background: linear-gradient(180deg, rgba(29, 158, 117, 0.06) 0%, var(--bg-glass) 40%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(29, 158, 117, 0.1);
+}
+
+.bcard.winner::before {
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+}
+
+.bname {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.r1 { background: var(--green-glow); color: var(--green); }
+.r2 { background: var(--amber-glow); color: var(--amber); }
+.r3 { background: var(--red-glow); color: var(--red); }
+
+.btotal {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 600;
+  margin: 10px 0 16px;
+  transition: color 0.3s ease;
+}
+
+.btotal.green { color: var(--green); }
+.btotal.amber { color: var(--amber); }
+.btotal.red { color: var(--red); }
+
+.breakdown {
+  border-top: 1px solid var(--border-glass);
+  padding-top: 12px;
+}
+
+.breakdown .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.breakdown .row span:last-child {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.breakdown .row.total {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-glass);
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+/* ─── Chart ─── */
+.chart-section {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+
+.chart-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 220px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-glass);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.footnote {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-glass);
+  line-height: 1.6;
+}
+
+.footnote a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .controls { grid-template-columns: 1fr; }
+  .broker-cards { grid-template-columns: 1fr; }
+  .save-banner { flex-direction: column; align-items: center; }
+  .header h1 { font-size: 22px; }
+  .btotal { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Brokerage Cost Calculator</h1>
+    <p>Equity Delivery &mdash; Dhan vs Zerodha vs Groww (2026 rates)</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-card">
+      <div class="ctrl-label">Trade Value (buy = sell)</div>
+      <div class="ctrl-row">
+        <input type="range" id="tradeVal" min="10000" max="500000" step="5000" value="100000">
+        <span class="ctrl-val" id="tradeValOut"></span>
+      </div>
+    </div>
+    <div class="ctrl-card">
+      <div class="ctrl-label">Sell Orders / Round Trip</div>
+      <div class="ctrl-row">
+        <input type="range" id="sellOrders" min="1" max="5" step="1" value="1">
+        <span class="ctrl-val" id="sellOrdersOut"></span>
+      </div>
+    </div>
+    <div class="ctrl-card">
+      <div class="ctrl-label">Trades / Year (Round Trips)</div>
+      <div class="ctrl-row">
+        <input type="range" id="tradesPerYear" min="1" max="52" step="1" value="12">
+        <span class="ctrl-val" id="tradesPerYearOut"></span>
+      </div>
+    </div>
+    <div class="ctrl-card">
+      <div class="ctrl-label">Stocks / Trade (ISINs)</div>
+      <div class="ctrl-row">
+        <input type="range" id="isins" min="1" max="10" step="1" value="1">
+        <span class="ctrl-val" id="isinsOut"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="save-banner" class="save-banner">
+    <div class="save-item"><span class="sv" id="save-dhan-z">&mdash;</span><span class="sl">Dhan saves vs Zerodha / yr</span></div>
+    <div class="save-item"><span class="sv" id="save-dhan-g">&mdash;</span><span class="sl">Dhan saves vs Groww / yr</span></div>
+    <div class="save-item"><span class="sv" id="save-z-g">&mdash;</span><span class="sl">Zerodha saves vs Groww / yr</span></div>
+  </div>
+
+  <div class="broker-cards">
+    <div class="bcard" id="card-dhan">
+      <div class="bname">Dhan <span class="rank-tag r1" id="rank-dhan">#1</span></div>
+      <div class="btotal green" id="total-dhan">&mdash;</div>
+      <div class="breakdown">
+        <div class="row"><span>Brokerage</span><span id="b-dhan-brok">&mdash;</span></div>
+        <div class="row"><span>DP charges</span><span id="b-dhan-dp">&mdash;</span></div>
+        <div class="row"><span>AMC (annual)</span><span id="b-dhan-amc">&mdash;</span></div>
+        <div class="row total"><span>Per trade</span><span id="b-dhan-pertrade">&mdash;</span></div>
+      </div>
+    </div>
+    <div class="bcard" id="card-zerodha">
+      <div class="bname">Zerodha <span class="rank-tag r2" id="rank-zerodha">#2</span></div>
+      <div class="btotal amber" id="total-zerodha">&mdash;</div>
+      <div class="breakdown">
+        <div class="row"><span>Brokerage</span><span id="b-z-brok">&mdash;</span></div>
+        <div class="row"><span>DP charges</span><span id="b-z-dp">&mdash;</span></div>
+        <div class="row"><span>AMC (annual)</span><span id="b-z-amc">&mdash;</span></div>
+        <div class="row total"><span>Per trade</span><span id="b-z-pertrade">&mdash;</span></div>
+      </div>
+    </div>
+    <div class="bcard" id="card-groww">
+      <div class="bname">Groww <span class="rank-tag r3" id="rank-groww">#3</span></div>
+      <div class="btotal red" id="total-groww">&mdash;</div>
+      <div class="breakdown">
+        <div class="row"><span>Brokerage</span><span id="b-g-brok">&mdash;</span></div>
+        <div class="row"><span>DP charges</span><span id="b-g-dp">&mdash;</span></div>
+        <div class="row"><span>AMC (annual)</span><span id="b-g-amc">&mdash;</span></div>
+        <div class="row total"><span>Per trade</span><span id="b-g-pertrade">&mdash;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-title">Annual Cost Breakdown</div>
+    <div class="chart-wrap">
+      <canvas id="costChart"></canvas>
+    </div>
+    <div class="chart-legend">
+      <span><span class="legend-dot" style="background:rgba(29,158,117,0.5)"></span>Brokerage</span>
+      <span><span class="legend-dot" style="background:rgba(99,179,150,0.8)"></span>DP Charges</span>
+      <span><span class="legend-dot" style="background:rgba(100,160,210,0.6)"></span>AMC</span>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Excludes STT, stamp duty, exchange charges &amp; SEBI turnover fees (identical across all brokers).<br>
+    Rates verified as of March 2026. Zerodha AMC assumes portfolio &gt; ₹10L.
+  </div>
+</div>
+
+<script>
+const GST = 1.18;
+
+// Verified 2026 rates
+const RATES = {
+  dhan:    { brokPct: 0, brokFlat: 0, dpBase: 12.50, amc: 0 },
+  zerodha: { brokPct: 0, brokFlat: 0, dpBase: 13.00, amc: 300 },
+  groww:   { brokPct: 0.0005, brokFlat: 20, dpBase: 20.00, amc: 0 }
+};
+
+function calc(tradeVal, sellOrders, tradesPerYear, isins) {
+  // Dhan: ₹0 brokerage, DP = ₹12.50 + GST per sell per ISIN
+  const dhanDP = RATES.dhan.dpBase * GST * sellOrders * isins;
+  const dhanBrok = 0;
+  const dhanPerTrade = dhanDP + dhanBrok;
+  const dhanAnnual = dhanPerTrade * tradesPerYear;
+
+  // Zerodha: ₹0 brokerage, DP = ₹13.00 + GST per sell per ISIN, AMC = ₹300/yr
+  const zDP = RATES.zerodha.dpBase * GST * isins; // per sell (1 sell per round trip for zerodha — per ISIN)
+  const zBrok = 0;
+  const zPerTrade = zDP + zBrok;
+  const zAnnual = zPerTrade * tradesPerYear + RATES.zerodha.amc;
+
+  // Groww: Brokerage = min(₹20, 0.05% of trade value) per side (buy+sell = 2x)
+  // DP = ₹20 + GST per sell per ISIN
+  const growwBrokPerSide = Math.min(RATES.groww.brokFlat, tradeVal * RATES.groww.brokPct);
+  const growwBrokPerTrade = growwBrokPerSide * 2; // buy + sell
+  const growwDP = RATES.groww.dpBase * GST * sellOrders * isins;
+  const growwPerTrade = growwBrokPerTrade + growwDP;
+  const growwAnnual = growwPerTrade * tradesPerYear;
+
+  return {
+    dhan:    { annual: dhanAnnual, perTrade: dhanPerTrade, brok: dhanBrok * tradesPerYear, dp: dhanDP * tradesPerYear, amc: 0 },
+    zerodha: { annual: zAnnual, perTrade: zPerTrade + RATES.zerodha.amc / tradesPerYear, brok: 0, dp: zDP * tradesPerYear, amc: RATES.zerodha.amc },
+    groww:   { annual: growwAnnual, perTrade: growwPerTrade, brok: growwBrokPerTrade * tradesPerYear, dp: growwDP * tradesPerYear, amc: 0 }
+  };
+}
+
+function fmt(n) {
+  return '\u20B9' + Math.round(n).toLocaleString('en-IN');
+}
+
+let chart;
+
+function update() {
+  const tradeVal = +document.getElementById('tradeVal').value;
+  const sellOrders = +document.getElementById('sellOrders').value;
+  const tradesPerYear = +document.getElementById('tradesPerYear').value;
+  const isins = +document.getElementById('isins').value;
+
+  document.getElementById('tradeValOut').textContent = '\u20B9' + tradeVal.toLocaleString('en-IN');
+  document.getElementById('sellOrdersOut').textContent = sellOrders + (sellOrders === 1 ? ' order' : ' orders');
+  document.getElementById('tradesPerYearOut').textContent = tradesPerYear + ' / yr';
+  document.getElementById('isinsOut').textContent = isins + (isins === 1 ? ' ISIN' : ' ISINs');
+
+  const r = calc(tradeVal, sellOrders, tradesPerYear, isins);
+
+  // Rank brokers
+  const brokers = [
+    { key: 'dhan', data: r.dhan },
+    { key: 'zerodha', data: r.zerodha },
+    { key: 'groww', data: r.groww }
+  ].sort((a, b) => a.data.annual - b.data.annual);
+
+  const rankTags = ['r1', 'r2', 'r3'];
+  brokers.forEach((b, i) => {
+    const el = document.getElementById('rank-' + b.key);
+    el.textContent = '#' + (i + 1);
+    el.className = 'rank-tag ' + rankTags[i];
+
+    const card = document.getElementById('card-' + b.key);
+    card.className = 'bcard' + (i === 0 ? ' winner' : '');
+  });
+
+  // Update totals & breakdowns
+  const colorClass = { dhan: '', zerodha: '', groww: '' };
+  brokers.forEach((b, i) => {
+    colorClass[b.key] = i === 0 ? 'green' : i === 1 ? 'amber' : 'red';
+  });
+
+  const updateCard = (key, prefix, data) => {
+    document.getElementById('total-' + key).textContent = fmt(data.annual) + '/yr';
+    document.getElementById('total-' + key).className = 'btotal ' + colorClass[key];
+    document.getElementById('b-' + prefix + '-brok').textContent = fmt(data.brok);
+    document.getElementById('b-' + prefix + '-dp').textContent = fmt(data.dp);
+    document.getElementById('b-' + prefix + '-amc').textContent = fmt(data.amc);
+    document.getElementById('b-' + prefix + '-pertrade').textContent = fmt(data.annual / tradesPerYear);
+  };
+
+  updateCard('dhan', 'dhan', r.dhan);
+  updateCard('zerodha', 'z', r.zerodha);
+  updateCard('groww', 'g', r.groww);
+
+  // Savings
+  document.getElementById('save-dhan-z').textContent = fmt(Math.abs(r.zerodha.annual - r.dhan.annual));
+  document.getElementById('save-dhan-g').textContent = fmt(Math.abs(r.groww.annual - r.dhan.annual));
+  document.getElementById('save-z-g').textContent = fmt(Math.abs(r.groww.annual - r.zerodha.annual));
+
+  // Chart
+  const chartData = {
+    labels: ['Dhan', 'Zerodha', 'Groww'],
+    datasets: [
+      {
+        label: 'Brokerage',
+        data: [r.dhan.brok, r.zerodha.brok, r.groww.brok],
+        backgroundColor: ['rgba(29,158,117,0.4)', 'rgba(186,117,23,0.4)', 'rgba(197,48,48,0.4)'],
+        borderRadius: { topLeft: 0, topRight: 0 }
+      },
+      {
+        label: 'DP Charges',
+        data: [r.dhan.dp, r.zerodha.dp, r.groww.dp],
+        backgroundColor: ['rgba(29,158,117,0.7)', 'rgba(186,117,23,0.7)', 'rgba(197,48,48,0.7)'],
+      },
+      {
+        label: 'AMC',
+        data: [r.dhan.amc, r.zerodha.amc, r.groww.amc],
+        backgroundColor: ['rgba(100,160,210,0.5)', 'rgba(100,160,210,0.5)', 'rgba(100,160,210,0.5)'],
+        borderRadius: { topLeft: 6, topRight: 6 }
+      }
+    ]
+  };
+
+  if (chart) {
+    chart.data = chartData;
+    chart.update('none');
+  } else {
+    chart = new Chart(document.getElementById('costChart'), {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 400, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10, 14, 23, 0.95)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleFont: { family: 'DM Sans', size: 13 },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: ctx => ' ' + ctx.dataset.label + ': \u20B9' + Math.round(ctx.raw).toLocaleString('en-IN')
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: {
+              font: { family: 'DM Sans', size: 13, weight: 500 },
+              color: '#8899aa'
+            },
+            border: { display: false }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+            ticks: {
+              font: { family: 'JetBrains Mono', size: 11 },
+              color: '#556677',
+              callback: v => '\u20B9' + (v >= 1000 ? (v/1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : v)
+            },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+}
+
+// Bind sliders
+['tradeVal', 'sellOrders', 'tradesPerYear', 'isins'].forEach(id => {
+  document.getElementById(id).addEventListener('input', update);
+});
+
+update();
+</script>
+
+</body>
+</html>
