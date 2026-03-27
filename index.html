@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root {
+:root, [data-theme="dark"] {
   --bg-deep: #0a0e17;
   --bg-surface: #111827;
   --bg-card: rgba(17, 24, 39, 0.7);
@@ -26,6 +26,43 @@
   --red-glow: rgba(197, 48, 48, 0.15);
   --radius: 16px;
   --radius-sm: 10px;
+  --slider-track: rgba(255,255,255,0.08);
+  --slider-border: #0a0e17;
+  --gradient-heading: linear-gradient(135deg, #f0f4f8 0%, #8899aa 100%);
+  --orb1: rgba(29, 158, 117, 0.08);
+  --orb2: rgba(186, 117, 23, 0.05);
+  --chart-grid: rgba(255,255,255,0.04);
+  --chart-tick: #556677;
+  --chart-label: #8899aa;
+  --tooltip-bg: rgba(10, 14, 23, 0.95);
+}
+
+[data-theme="light"] {
+  --bg-deep: #f4f6f9;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-glass: rgba(0, 0, 0, 0.02);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-active: rgba(0, 0, 0, 0.15);
+  --text-primary: #1a2332;
+  --text-secondary: #5a6a7a;
+  --text-muted: #8a95a5;
+  --green: #158a64;
+  --green-glow: rgba(21, 138, 100, 0.1);
+  --green-soft: #e6f5ef;
+  --amber: #a06510;
+  --amber-glow: rgba(160, 101, 16, 0.1);
+  --red: #b52828;
+  --red-glow: rgba(181, 40, 40, 0.1);
+  --slider-track: rgba(0,0,0,0.1);
+  --slider-border: #f4f6f9;
+  --gradient-heading: linear-gradient(135deg, #1a2332 0%, #5a6a7a 100%);
+  --orb1: rgba(29, 158, 117, 0.05);
+  --orb2: rgba(186, 117, 23, 0.03);
+  --chart-grid: rgba(0,0,0,0.05);
+  --chart-tick: #8a95a5;
+  --chart-label: #5a6a7a;
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,7 +82,7 @@ body::before {
   right: -200px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(29, 158, 117, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--orb1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -57,7 +94,7 @@ body::after {
   left: -200px;
   width: 700px;
   height: 700px;
-  background: radial-gradient(circle, rgba(186, 117, 23, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--orb2) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -80,7 +117,7 @@ body::after {
   font-weight: 600;
   letter-spacing: -0.5px;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #f0f4f8 0%, #8899aa 100%);
+  background: var(--gradient-heading);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -143,7 +180,7 @@ input[type=range] {
   appearance: none;
   flex: 1;
   height: 4px;
-  background: rgba(255,255,255,0.08);
+  background: var(--slider-track);
   border-radius: 4px;
   outline: none;
   cursor: pointer;
@@ -155,7 +192,7 @@ input[type=range]::-webkit-slider-thumb {
   height: 18px;
   border-radius: 50%;
   background: var(--green);
-  border: 3px solid var(--bg-deep);
+  border: 3px solid var(--slider-border);
   box-shadow: 0 0 12px rgba(29, 158, 117, 0.4);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -363,6 +400,68 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 /* ─── Responsive ─── */
+/* ─── Theme Toggle ─── */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 100;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 30px;
+  padding: 6px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 64px;
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-active);
+}
+
+.toggle-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--green);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+[data-theme="light"] .toggle-thumb {
+  transform: translateX(32px);
+}
+
+.toggle-icons {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+body {
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
 @media (max-width: 768px) {
   .controls { grid-template-columns: 1fr; }
   .broker-cards { grid-template-columns: 1fr; }
@@ -373,6 +472,13 @@ input[type=range]:active::-webkit-slider-thumb {
 </style>
 </head>
 <body>
+
+<div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+  <div class="toggle-track">
+    <div class="toggle-thumb"></div>
+    <div class="toggle-icons"><span>🌙</span><span>☀️</span></div>
+  </div>
+</div>
 
 <div class="container">
   <div class="header">
@@ -469,6 +575,43 @@ input[type=range]:active::-webkit-slider-thumb {
 </div>
 
 <script>
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  if (chart) { updateChartColors(); chart.update(); }
+}
+
+// Load saved theme
+(function() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function getChartColors() {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    grid: style.getPropertyValue('--chart-grid').trim(),
+    tick: style.getPropertyValue('--chart-tick').trim(),
+    label: style.getPropertyValue('--chart-label').trim(),
+    tooltipBg: style.getPropertyValue('--tooltip-bg').trim(),
+  };
+}
+
+function updateChartColors() {
+  const c = getChartColors();
+  const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+  chart.options.scales.x.ticks.color = c.label;
+  chart.options.scales.y.ticks.color = c.tick;
+  chart.options.scales.y.grid.color = c.grid;
+  chart.options.plugins.tooltip.backgroundColor = c.tooltipBg;
+  chart.options.plugins.tooltip.titleColor = textPrimary;
+  chart.options.plugins.tooltip.bodyColor = textPrimary;
+}
+
 const GST = 1.18;
 
 // Verified 2026 rates
@@ -604,8 +747,10 @@ function update() {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(10, 14, 23, 0.95)',
-            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: getChartColors().tooltipBg,
+            borderColor: 'rgba(128,128,128,0.2)',
+            titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+            bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
             borderWidth: 1,
             titleFont: { family: 'DM Sans', size: 13 },
             bodyFont: { family: 'JetBrains Mono', size: 12 },
@@ -622,16 +767,16 @@ function update() {
             grid: { display: false },
             ticks: {
               font: { family: 'DM Sans', size: 13, weight: 500 },
-              color: '#8899aa'
+              color: getChartColors().label
             },
             border: { display: false }
           },
           y: {
             stacked: true,
-            grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+            grid: { color: getChartColors().grid, drawBorder: false },
             ticks: {
               font: { family: 'JetBrains Mono', size: 11 },
-              color: '#556677',
+              color: getChartColors().tick,
               callback: v => '\u20B9' + (v >= 1000 ? (v/1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : v)
             },
             border: { display: false }
