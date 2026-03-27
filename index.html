@@ -518,9 +518,9 @@ body {
   </div>
 
   <div id="save-banner" class="save-banner">
-    <div class="save-item"><span class="sv" id="save-dhan-z">&mdash;</span><span class="sl">Dhan saves vs Zerodha / yr</span></div>
-    <div class="save-item"><span class="sv" id="save-dhan-g">&mdash;</span><span class="sl">Dhan saves vs Groww / yr</span></div>
-    <div class="save-item"><span class="sv" id="save-z-g">&mdash;</span><span class="sl">Zerodha saves vs Groww / yr</span></div>
+    <div class="save-item"><span class="sv" id="save-dhan-z">&mdash;</span><span class="sl">Dhan vs Zerodha / yr</span></div>
+    <div class="save-item"><span class="sv" id="save-dhan-g">&mdash;</span><span class="sl">Dhan vs Groww / yr</span></div>
+    <div class="save-item"><span class="sv" id="save-z-g">&mdash;</span><span class="sl">Zerodha vs Groww / yr</span></div>
   </div>
 
   <div class="broker-cards">
@@ -705,9 +705,19 @@ function update() {
   updateCard('groww', 'g', r.groww);
 
   // Savings
-  document.getElementById('save-dhan-z').textContent = fmt(Math.abs(r.zerodha.annual - r.dhan.annual));
-  document.getElementById('save-dhan-g').textContent = fmt(Math.abs(r.groww.annual - r.dhan.annual));
-  document.getElementById('save-z-g').textContent = fmt(Math.abs(r.groww.annual - r.zerodha.annual));
+  // Positive = Dhan/Zerodha is cheaper, Negative = Dhan/Zerodha is costlier
+  const dhanVsZ = r.zerodha.annual - r.dhan.annual;
+  const dhanVsG = r.groww.annual - r.dhan.annual;
+  const zVsG = r.groww.annual - r.zerodha.annual;
+
+  const fmtDiff = (n) => (n >= 0 ? '+' : '-') + '\u20B9' + Math.abs(Math.round(n)).toLocaleString('en-IN');
+
+  document.getElementById('save-dhan-z').textContent = fmtDiff(dhanVsZ);
+  document.getElementById('save-dhan-z').style.color = dhanVsZ >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('save-dhan-g').textContent = fmtDiff(dhanVsG);
+  document.getElementById('save-dhan-g').style.color = dhanVsG >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('save-z-g').textContent = fmtDiff(zVsG);
+  document.getElementById('save-z-g').style.color = zVsG >= 0 ? 'var(--green)' : 'var(--red)';
 
   // Chart
   const chartData = {
