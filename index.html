@@ -400,6 +400,113 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 /* ─── Responsive ─── */
+/* ─── Info Tooltips ─── */
+.info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: help;
+  margin-left: 6px;
+  position: relative;
+  vertical-align: middle;
+}
+
+[data-theme="light"] .info-btn {
+  background: rgba(0,0,0,0.05);
+}
+
+.info-btn:hover .info-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.info-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-active);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  white-space: normal;
+  width: 240px;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 50;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+[data-theme="light"] .info-tip {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+/* ─── Case Study ─── */
+.case-study {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-top: 28px;
+  backdrop-filter: blur(12px);
+}
+
+.case-study h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.case-study .example {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.case-study .example:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.case-study .example h4 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+.case-study p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.case-study .calc-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
 /* ─── Theme Toggle ─── */
 .theme-toggle {
   position: fixed;
@@ -488,28 +595,28 @@ body {
 
   <div class="controls">
     <div class="ctrl-card">
-      <div class="ctrl-label">Trade Value (buy = sell)</div>
+      <div class="ctrl-label">Trade Value (buy = sell) <span class="info-btn">i<span class="info-tip">Total value of stocks you buy. Sell value is assumed equal. Affects Groww's brokerage (0.05% or ₹20, whichever is lower per side).</span></span></div>
       <div class="ctrl-row">
         <input type="range" id="tradeVal" min="10000" max="500000" step="5000" value="100000">
         <span class="ctrl-val" id="tradeValOut"></span>
       </div>
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">Sell Orders / Round Trip</div>
+      <div class="ctrl-label">Sell Orders / Round Trip <span class="info-btn">i<span class="info-tip">Number of separate sell orders per trade. DP charges are per sell order per ISIN. Selling in batches costs more in DP charges.</span></span></div>
       <div class="ctrl-row">
         <input type="range" id="sellOrders" min="1" max="5" step="1" value="1">
         <span class="ctrl-val" id="sellOrdersOut"></span>
       </div>
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">Trades / Year (Round Trips)</div>
+      <div class="ctrl-label">Trades / Year (Round Trips) <span class="info-btn">i<span class="info-tip">A round trip = 1 buy + 1 sell. 12/yr means you trade roughly once a month. All costs scale linearly with this number.</span></span></div>
       <div class="ctrl-row">
         <input type="range" id="tradesPerYear" min="1" max="52" step="1" value="12">
         <span class="ctrl-val" id="tradesPerYearOut"></span>
       </div>
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">Stocks / Trade (ISINs)</div>
+      <div class="ctrl-label">Stocks / Trade (ISINs) <span class="info-btn">i<span class="info-tip">Number of different stocks per trade. DP charges multiply by ISINs — selling 3 stocks costs 3× the DP charge vs selling 1 stock.</span></span></div>
       <div class="ctrl-row">
         <input type="range" id="isins" min="1" max="10" step="1" value="1">
         <span class="ctrl-val" id="isinsOut"></span>
@@ -571,6 +678,28 @@ body {
   <div class="footnote">
     Excludes STT, stamp duty, exchange charges &amp; SEBI turnover fees (identical across all brokers).<br>
     Rates verified as of March 2026. Zerodha AMC assumes portfolio &gt; ₹10L.
+  </div>
+
+  <div class="case-study">
+    <h3>📊 How Costs Are Calculated — Examples</h3>
+
+    <div class="example">
+      <h4>Example 1: Casual Investor — ₹1L trade, 1 stock, once a month</h4>
+      <p>You buy ₹1,00,000 worth of Reliance shares and sell them a month later. One buy, one sell, one stock (ISIN).</p>
+      <div class="calc-line"><strong>Dhan:</strong> Brokerage ₹0 + DP (₹12.50 × 1.18 GST × 1 sell × 1 ISIN) = ₹14.75/trade → ₹177/yr (12 trades)</div>
+      <div class="calc-line"><strong>Zerodha:</strong> Brokerage ₹0 + DP (₹13.00 × 1.18 × 1 ISIN) = ₹15.34/trade + ₹300 AMC → ₹484/yr</div>
+      <div class="calc-line"><strong>Groww:</strong> Brokerage (min(₹20, ₹50) = ₹20 × 2 sides = ₹40) + DP (₹20 × 1.18 × 1 sell × 1 ISIN = ₹23.60) = ₹63.60/trade → ₹763/yr</div>
+      <p style="margin-top:8px;color:var(--green);">✓ Dhan saves ₹307 vs Zerodha and ₹586 vs Groww annually.</p>
+    </div>
+
+    <div class="example">
+      <h4>Example 2: Active Trader — ₹2L trade, 3 stocks, weekly</h4>
+      <p>You trade ₹2,00,000 across 3 different stocks every week (52 round trips/year). You sell each stock separately (3 sell orders).</p>
+      <div class="calc-line"><strong>Dhan:</strong> DP (₹14.75 × 3 sells × 3 ISINs) = ₹132.75/trade → ₹6,903/yr</div>
+      <div class="calc-line"><strong>Zerodha:</strong> DP (₹15.34 × 3 ISINs) = ₹46.02/trade + ₹300 AMC → ₹2,693/yr</div>
+      <div class="calc-line"><strong>Groww:</strong> Brokerage (₹20 × 2 = ₹40) + DP (₹23.60 × 3 sells × 3 ISINs = ₹212.40) = ₹252.40/trade → ₹13,125/yr</div>
+      <p style="margin-top:8px;color:var(--text-secondary);">⚠ With multiple ISINs and sell orders, DP charges dominate. Dhan's DP multiplies by both sell orders AND ISINs, making Zerodha cheaper for multi-stock active traders.</p>
+    </div>
   </div>
 </div>
 
